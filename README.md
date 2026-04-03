@@ -47,7 +47,7 @@ Para grupos musicais e organizadores de eventos que enfrentam dificuldades no co
    ./mvnw spring-boot:run
    ```
 4. Acesse a documentação Swagger:
-   `http://localhost:8081/swagger-ui.html`
+   `http://localhost:8081/api/swagger-ui.html`
 
 ## 👥 Equipe
 - **Ana Beatriz Camilo da Costa** - Desenvolvedora
