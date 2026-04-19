@@ -3,7 +3,6 @@ package br.ufrn.imd.sgam.model;
 import br.ufrn.imd.sgam.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Data;
 import org.hibernate.annotations.SQLRestriction;
 

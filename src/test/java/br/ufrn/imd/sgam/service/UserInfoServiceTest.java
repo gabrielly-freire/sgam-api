@@ -41,7 +41,7 @@ public class UserInfoServiceTest {
 
     @Test
     @DisplayName("SAVE: Deve salvar usuário com sucesso")
-    void testShouldSaveUserSuccessfully () {
+    void testShouldSaveUserSuccessfully() {
         UserInfoDTO dto = createDTO();
         UserInfo model = new UserInfo();
 

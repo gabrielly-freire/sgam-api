@@ -6,7 +6,7 @@ Este projeto foi desenvolvido para automatizar e otimizar o gerenciamento de apr
 Para grupos musicais e organizadores de eventos que enfrentam dificuldades no controle logístico, o **SGAM API** é um software de gestão web que centraliza a administração de membros, instrumentos e solicitações de transporte, integrando a gestão artística com a infraestrutura necessária.
 
 ## 🚀 Tecnologias Utilizadas
-- **Linguagem:** Java 17+
+- **Linguagem:** Java 21+
 - **Framework:** Spring Boot 3+
 - **Módulos Spring:** Web, Data JPA, Validation).
 - **Banco de Dados:** PostgreSQL.
@@ -29,7 +29,7 @@ Para grupos musicais e organizadores de eventos que enfrentam dificuldades no co
 ## 🛠️ Como Executar o Projeto
 
 ### Pré-requisitos
-- Java 17 ou superior
+- Java 21 ou superior
 - Maven 3+
 - Docker e Docker Compose (para o banco de dados)
 
@@ -40,14 +40,14 @@ Para grupos musicais e organizadores de eventos que enfrentam dificuldades no co
    ```
 2. Suba o banco de dados via Docker:
    ```bash
-   docker-compose up -d
+   docker-compose up db -d
    ```
 3. Execute a aplicação:
    ```bash
    ./mvnw spring-boot:run
    ```
 4. Acesse a documentação Swagger:
-   `http://localhost:8081/api/swagger-ui.html`
+   `http://localhost:8080/api/swagger-ui.html`
 
 ## 👥 Equipe
 - **Ana Beatriz Camilo da Costa** - Desenvolvedora
