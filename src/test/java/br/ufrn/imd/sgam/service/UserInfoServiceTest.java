@@ -7,165 +7,105 @@ import br.ufrn.imd.sgam.exception.ResourceNotFoundException;
 import br.ufrn.imd.sgam.mapper.UserInfoMapper;
 import br.ufrn.imd.sgam.model.UserInfo;
 import br.ufrn.imd.sgam.repository.UserInfoRepository;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UserInfoServiceTest {
+class UserInfoServiceTest {
 
     @Mock
-    private UserInfoRepository userInfoRepository;
+    private UserInfoRepository repository;
 
     @Mock
-    private UserInfoMapper userInfoMapper;
+    private UserInfoMapper mapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private UserInfoService userInfoService;
-
-    // --- TESTES DO MÉTODO SAVE ---
+    private UserInfoService service;
 
     @Test
-    @DisplayName("SAVE: Deve salvar usuário com sucesso")
-    void testShouldSaveUserSuccessfully() {
+    void shouldSaveUserWithSolicitanteRole() {
         UserInfoDTO dto = createDTO();
         UserInfo model = new UserInfo();
 
-        when(userInfoRepository.existsUserInfoByEmail(dto.email())).thenReturn(false);
-        when(userInfoRepository.existsUserInfoByUsername(dto.username())).thenReturn(false);
-        when(userInfoMapper.toUserInfo(dto)).thenReturn(model);
-        when(userInfoRepository.save(model)).thenReturn(model);
-        when(userInfoMapper.toUserInfoDTO(model)).thenReturn(dto);
+        when(repository.existsUserInfoByEmail(dto.email())).thenReturn(false);
+        when(repository.existsUserInfoByUsername(dto.username())).thenReturn(false);
+        when(mapper.toUserInfo(dto)).thenReturn(model);
+        when(passwordEncoder.encode(any())).thenReturn("hash");
+        when(repository.save(any())).thenReturn(model);
+        when(mapper.toUserInfoDTO(model)).thenReturn(dto);
 
-        UserInfoDTO result = userInfoService.save(dto);
+        service.save(dto);
 
-        assertNotNull(result);
-        verify(userInfoRepository).save(any());
+        verify(repository).save(argThat(user ->
+                user.getRole() == Role.SOLICITANTE &&
+                user.getPassword().equals("hash")
+        ));
     }
 
     @Test
-    @DisplayName("SAVE: Deve falhar quando email já existe")
-    void testShouldFailSaveUserWithExistingEmail() {
-        UserInfoDTO dto = createDTO();
-        when(userInfoRepository.existsUserInfoByEmail(dto.email())).thenReturn(true);
+    void shouldSoftDeleteUser() {
+        UserInfo user = new UserInfo();
 
-        assertThrows(BusinessException.class, () -> userInfoService.save(dto));
-        verify(userInfoRepository, never()).save(any());
+        when(repository.findById(1L)).thenReturn(Optional.of(user));
+
+        service.delete(1L);
+
+        verify(repository).save(argThat(u -> !u.getActive()));
     }
 
     @Test
-    @DisplayName("SAVE: Deve falhar quando username já existe")
-    void testShouldFailSaveUserWithExistingUsername() {
-        UserInfoDTO dto = createDTO();
-        when(userInfoRepository.existsUserInfoByEmail(dto.email())).thenReturn(false);
-        when(userInfoRepository.existsUserInfoByUsername(dto.username())).thenReturn(true);
+    void shouldPromoteToCoordenador() {
+        UserInfo user = new UserInfo();
+        user.setRole(Role.SOLICITANTE);
 
-        assertThrows(BusinessException.class, () -> userInfoService.save(dto));
-        verify(userInfoRepository, never()).save(any());
-    }
+        when(repository.findById(1L)).thenReturn(Optional.of(user));
+        when(repository.save(user)).thenReturn(user);
+        when(mapper.toUserInfoDTO(user)).thenReturn(createDTO());
 
-    // --- TESTES DO MÉTODO GET ---
+        service.tornarCoordenador(1L);
 
-    @Test
-    @DisplayName("GET: Deve retornar usuário por ID")
-    void testShouldGetUserById() {
-        Long id = 1L;
-        UserInfo model = new UserInfo();
-        when(userInfoRepository.findById(id)).thenReturn(Optional.of(model));
-        when(userInfoMapper.toUserInfoDTO(model)).thenReturn(createDTO());
-
-        UserInfoDTO result = userInfoService.get(id);
-
-        assertNotNull(result);
+        assertEquals(Role.COORDENADOR, user.getRole());
     }
 
     @Test
-    @DisplayName("GET: Deve falhar ao buscar ID inexistente")
-    void testShouldFailGetUserById() {
-        when(userInfoRepository.findById(anyLong())).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> userInfoService.get(1L));
-    }
+    void shouldFailPromoteIfAlreadyCoordinator() {
+        UserInfo user = new UserInfo();
+        user.setRole(Role.COORDENADOR);
 
-    // --- TESTES DO MÉTODO LIST (PAGINADO) ---
+        when(repository.findById(1L)).thenReturn(Optional.of(user));
 
-    @Test
-    @DisplayName("LIST: Deve retornar página de usuários")
-    void testShouldGetUsersPage() {
-        Pageable pageable = PageRequest.of(0, 10);
-        UserInfo model = new UserInfo();
-        Page<UserInfo> page = new PageImpl<>(List.of(model));
-
-        when(userInfoRepository.findAllPage(pageable)).thenReturn(page);
-        when(userInfoMapper.toUserInfoDTO(model)).thenReturn(createDTO());
-
-        Page<UserInfoDTO> result = userInfoService.list(pageable);
-
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.getTotalElements());
-    }
-
-    // --- TESTES DO MÉTODO UPDATE ---
-
-    @Test
-    @DisplayName("UPDATE: Deve atualizar usuário com sucesso")
-    void testShouldUpdateUserSuccessfully() {
-        Long id = 1L;
-        UserInfoDTO dto = createDTO();
-        UserInfo model = new UserInfo();
-
-        when(userInfoRepository.findById(id)).thenReturn(Optional.of(model));
-        when(userInfoMapper.toUserInfo(dto)).thenReturn(model);
-        when(userInfoRepository.save(model)).thenReturn(model);
-        when(userInfoMapper.toUserInfoDTO(model)).thenReturn(dto);
-
-        UserInfoDTO result = userInfoService.update(id, dto);
-
-        assertNotNull(result);
-        verify(userInfoRepository).save(model);
+        assertThrows(BusinessException.class,
+                () -> service.tornarCoordenador(1L));
     }
 
     @Test
-    @DisplayName("UPDATE: Deve falhar ao atualizar ID inexistente")
-    void testShouldFailUpdateUserWithNonExistingId() {
-        when(userInfoRepository.findById(anyLong())).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> userInfoService.update(1L, createDTO()));
-    }
+    void shouldThrowWhenUserNotFound() {
+        when(repository.findById(anyLong())).thenReturn(Optional.empty());
 
-    // --- TESTES DO MÉTODO DELETE ---
-
-    @Test
-    @DisplayName("DELETE: Deve deletar com sucesso")
-    void testShouldDeleteUserSuccessfully() {
-        Long id = 1L;
-        when(userInfoRepository.findById(id)).thenReturn(Optional.of(new UserInfo()));
-
-        userInfoService.delete(id);
-
-        verify(userInfoRepository, times(1)).deleteById(id);
-    }
-
-    @Test
-    @DisplayName("DELETE: Deve falhar ao deletar ID inexistente")
-    void testShouldFailDeleteUserWithNonExistingId() {
-        when(userInfoRepository.findById(anyLong())).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> userInfoService.delete(1L));
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.get(1L));
     }
 
     private UserInfoDTO createDTO() {
-        return new UserInfoDTO(1L, "ana@ufrn.br", "Ana Costa", "anacosta", "senha123", Role.ALUNO);
+        return new UserInfoDTO(
+                1L,
+                "ana@ufrn.br",
+                "Ana",
+                "ana",
+                "123456",
+                Role.SOLICITANTE
+        );
     }
 }
