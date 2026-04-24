@@ -20,7 +20,7 @@ import java.util.List;
 })
 @SQLRestriction(value = "active = true")
 public class UserInfo extends BaseEntity implements UserDetails {
-
+    private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
