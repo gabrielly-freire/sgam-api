@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/v1/user-info")
+@RequestMapping("/user-info")
 @Tag(name = "Usuário", description = "Gerenciamento de usuários")
 public class UserInfoController {
 
@@ -24,7 +24,7 @@ public class UserInfoController {
 
     @Operation(summary = "Criação de um usuário")
     @ApiResponses(value = {
-            @ApiResponse(description = "Usuário criado com sucesso.", responseCode = "201"),
+            @ApiResponse(description = "Usuário criado com sucesso.", responseCode = "200"),
             @ApiResponse(description = "Requisição mal formatada", responseCode = "400"),
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
@@ -39,7 +39,7 @@ public class UserInfoController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @GetMapping
-    public ResponseEntity<Page<UserInfoDTO>> list(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<UserInfoDTO>> list(@PageableDefault(size = 10, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(userInfoService.list(pageable));
     }
 
@@ -66,17 +66,30 @@ public class UserInfoController {
         return ResponseEntity.ok(userInfoService.update(id, userInfo));
     }
 
+    @DeleteMapping("/{id}")
     @Operation(summary = "Exclusão do usuário")
     @ApiResponses(value = {
-            @ApiResponse(description = "Exclusão realizada com sucesso.", responseCode = "204"),
-            @ApiResponse(description = "Usuário não encontrado.", responseCode = "404"),
-            @ApiResponse(description = "Não foi possível realizar a exclusão devido a lógica negocial", responseCode = "409"),
-            @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
+            @ApiResponse(responseCode = "204", description = "Exclusão realizada com sucesso."),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado."),
+            @ApiResponse(responseCode = "409", description = "Não foi possível realizar a exclusão devido a lógica negocial"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         userInfoService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Tornar usuário coordenador")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário atualizado para coordenador com sucesso."),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado."),
+            @ApiResponse(responseCode = "409", description = "Usuário já é coordenador."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    @PatchMapping("/{id}/coordenador")
+    public ResponseEntity<UserInfoDTO> tornarCoordenador(@PathVariable Long id) {
+        UserInfoDTO updated = userInfoService.tornarCoordenador(id);
+        return ResponseEntity.ok(updated);
     }
 
 }
