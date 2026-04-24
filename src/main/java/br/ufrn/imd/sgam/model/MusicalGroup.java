@@ -11,7 +11,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Table(name = "grupo_musical")
 @SQLRestriction(value = "active = true")
-public class Musicalgroup extends BaseEntity {
+public class MusicalGroup extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

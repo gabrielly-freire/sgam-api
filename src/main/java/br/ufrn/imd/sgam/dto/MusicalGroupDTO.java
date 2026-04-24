@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record MusicalgroupDTO(
+public record MusicalGroupDTO(
         Long id,
 
         @NotBlank(message = "O nome do grupo é obrigatório")
