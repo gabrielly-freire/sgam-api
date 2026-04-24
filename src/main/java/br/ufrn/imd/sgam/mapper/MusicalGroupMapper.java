@@ -11,24 +11,24 @@ public class MusicalGroupMapper {
         if (dto == null) {
             return null;
         }
-        MusicalGroup musicalgroup = new MusicalGroup();
-        musicalgroup.setId(dto.id());
-        musicalgroup.setNome(dto.nome());
-        return musicalgroup;
+        MusicalGroup musicalGroup = new MusicalGroup();
+        musicalGroup.setId(dto.id());
+        musicalGroup.setNome(dto.nome());
+        return musicalGroup;
     }
 
-    public MusicalGroupDTO toMusicalGroupDTO(MusicalGroup musicalgroup) {
-        if (musicalgroup == null) {
+    public MusicalGroupDTO toMusicalGroupDTO(MusicalGroup musicalGroup) {
+        if (musicalGroup == null) {
             return null;
         }
         Long coordenadorId = null;
-        if (musicalgroup.getCoordenador() != null) {
-            coordenadorId = musicalgroup.getCoordenador().getId();
+        if (musicalGroup.getCoordenador() != null) {
+            coordenadorId = musicalGroup.getCoordenador().getId();
         }
         
         return new MusicalGroupDTO(
-                musicalgroup.getId(),
-                musicalgroup.getNome(),
+                musicalGroup.getId(),
+                musicalGroup.getNome(),
                 coordenadorId
         );
     }

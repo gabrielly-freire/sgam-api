@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Grupo Musical", description = "Gerenciamento de grupos musicais")
 public class MusicalGroupController {
 
-    private final MusicalGroupService musicalgroupService;
+    private final MusicalGroupService musicalGroupService;
 
     @Operation(summary = "Criação de um grupo musical")
     @ApiResponses(value = {
@@ -29,8 +29,8 @@ public class MusicalGroupController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @PostMapping
-    public ResponseEntity<MusicalGroupDTO> create(@Valid @RequestBody MusicalGroupDTO musicalgroup) {
-        return ResponseEntity.ok(musicalgroupService.save(musicalgroup));
+    public ResponseEntity<MusicalGroupDTO> create(@Valid @RequestBody MusicalGroupDTO musicalGroup) {
+        return ResponseEntity.ok(musicalGroupService.save(musicalGroup));
     }
 
     @Operation(summary = "Listagem de grupos musicais")
@@ -40,7 +40,7 @@ public class MusicalGroupController {
     })
     @GetMapping
     public ResponseEntity<Page<MusicalGroupDTO>> list(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(musicalgroupService.list(pageable));
+        return ResponseEntity.ok(musicalGroupService.list(pageable));
     }
 
     @Operation(summary = "Encontrar um grupo musical pelo id")
@@ -51,7 +51,7 @@ public class MusicalGroupController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<MusicalGroupDTO> get(@PathVariable Long id) {
-        return ResponseEntity.ok(musicalgroupService.get(id));
+        return ResponseEntity.ok(musicalGroupService.get(id));
     }
 
     @Operation(summary = "Atualização de grupo musical")
@@ -62,8 +62,8 @@ public class MusicalGroupController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<MusicalGroupDTO> update(@PathVariable Long id, @Valid @RequestBody MusicalGroupDTO musicalgroup) {
-        return ResponseEntity.ok(musicalgroupService.update(id, musicalgroup));
+    public ResponseEntity<MusicalGroupDTO> update(@PathVariable Long id, @Valid @RequestBody MusicalGroupDTO musicalGroup) {
+        return ResponseEntity.ok(musicalGroupService.update(id, musicalGroup));
     }
 
     @Operation(summary = "Exclusão do grupo musical")
@@ -75,7 +75,7 @@ public class MusicalGroupController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        musicalgroupService.delete(id);
+        musicalGroupService.delete(id);
         return ResponseEntity.noContent().build();
     }
 

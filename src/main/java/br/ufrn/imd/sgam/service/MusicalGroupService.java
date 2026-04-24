@@ -18,57 +18,57 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class MusicalGroupService {
 
-    private final MusicalGroupRepository musicalgroupRepository;
+    private final MusicalGroupRepository musicalGroupRepository;
     private final UserInfoRepository userInfoRepository;
-    private final MusicalGroupMapper musicalgroupMapper;
+    private final MusicalGroupMapper musicalGroupMapper;
 
     public MusicalGroupDTO save(MusicalGroupDTO dto) {
-        if (musicalgroupRepository.existsMusicalGroupByNome(dto.nome())) {
+        if (musicalGroupRepository.existsMusicalGroupByNome(dto.nome())) {
             throw new BusinessException("Já existe um grupo musical com este nome.", HttpStatus.CONFLICT);
         }
 
         UserInfo coordenador = userInfoRepository.findById(dto.coordenadorId()).orElseThrow(
                 () -> new ResourceNotFoundException("Coordenador não encontrado"));
 
-        MusicalGroup musicalgroup = musicalgroupMapper.toMusicalGroup(dto);
-        musicalgroup.setCoordenador(coordenador);
+        MusicalGroup musicalGroup = musicalGroupMapper.toMusicalGroup(dto);
+        musicalGroup.setCoordenador(coordenador);
         
-        musicalgroup = musicalgroupRepository.save(musicalgroup);
-        return musicalgroupMapper.toMusicalGroupDTO(musicalgroup);
+        musicalGroup = musicalGroupRepository.save(musicalGroup);
+        return musicalGroupMapper.toMusicalGroupDTO(musicalGroup);
     }
 
     public MusicalGroupDTO get(Long id) {
-        MusicalGroup musicalgroup = musicalgroupRepository.findById(id).orElseThrow(
+        MusicalGroup musicalGroup = musicalGroupRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("Grupo musical não encontrado"));
-        return musicalgroupMapper.toMusicalGroupDTO(musicalgroup);
+        return musicalGroupMapper.toMusicalGroupDTO(musicalGroup);
     }
 
     public Page<MusicalGroupDTO> list(Pageable pageable) {
-        Page<MusicalGroup> musicalgroups = musicalgroupRepository.findAllPage(pageable);
-        return musicalgroups.map(musicalgroupMapper::toMusicalGroupDTO);
+        Page<MusicalGroup> musicalGroups = musicalGroupRepository.findAllPage(pageable);
+        return musicalGroups.map(musicalGroupMapper::toMusicalGroupDTO);
     }
 
     public MusicalGroupDTO update(Long id, MusicalGroupDTO dto) {
-        musicalgroupRepository.findById(id).orElseThrow(() ->
+        musicalGroupRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Grupo musical não encontrado"));
 
         UserInfo coordenador = userInfoRepository.findById(dto.coordenadorId()).orElseThrow(
                 () -> new ResourceNotFoundException("Coordenador não encontrado"));
 
-        MusicalGroup musicalgroup = musicalgroupMapper.toMusicalGroup(dto);
-        musicalgroup.setId(id);
-        musicalgroup.setCoordenador(coordenador);
+        MusicalGroup musicalGroup = musicalGroupMapper.toMusicalGroup(dto);
+        musicalGroup.setId(id);
+        musicalGroup.setCoordenador(coordenador);
         
-        musicalgroup = musicalgroupRepository.save(musicalgroup);
-        return musicalgroupMapper.toMusicalGroupDTO(musicalgroup);
+        musicalGroup = musicalGroupRepository.save(musicalGroup);
+        return musicalGroupMapper.toMusicalGroupDTO(musicalGroup);
     }
 
     public void delete(Long id) {
-        musicalgroupRepository.findById(id).orElseThrow(() ->
+        musicalGroupRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Grupo musical não encontrado"));
         //TODO: regras de exclusão
 
-        musicalgroupRepository.deleteById(id);
+        musicalGroupRepository.deleteById(id);
     }
 
 }
