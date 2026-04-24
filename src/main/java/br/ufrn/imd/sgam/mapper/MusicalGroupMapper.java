@@ -1,23 +1,23 @@
 package br.ufrn.imd.sgam.mapper;
 
-import br.ufrn.imd.sgam.dto.MusicalgroupDTO;
-import br.ufrn.imd.sgam.model.Musicalgroup;
+import br.ufrn.imd.sgam.dto.MusicalGroupDTO;
+import br.ufrn.imd.sgam.model.MusicalGroup;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MusicalgroupMapper {
+public class MusicalGroupMapper {
 
-    public Musicalgroup toMusicalgroup(MusicalgroupDTO dto) {
+    public MusicalGroup toMusicalGroup(MusicalGroupDTO dto) {
         if (dto == null) {
             return null;
         }
-        Musicalgroup musicalgroup = new Musicalgroup();
+        MusicalGroup musicalgroup = new MusicalGroup();
         musicalgroup.setId(dto.id());
         musicalgroup.setNome(dto.nome());
         return musicalgroup;
     }
 
-    public MusicalgroupDTO toMusicalgroupDTO(Musicalgroup musicalgroup) {
+    public MusicalGroupDTO toMusicalGroupDTO(MusicalGroup musicalgroup) {
         if (musicalgroup == null) {
             return null;
         }
@@ -26,7 +26,7 @@ public class MusicalgroupMapper {
             coordenadorId = musicalgroup.getCoordenador().getId();
         }
         
-        return new MusicalgroupDTO(
+        return new MusicalGroupDTO(
                 musicalgroup.getId(),
                 musicalgroup.getNome(),
                 coordenadorId

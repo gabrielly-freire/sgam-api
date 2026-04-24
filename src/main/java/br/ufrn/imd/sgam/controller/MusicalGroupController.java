@@ -1,7 +1,7 @@
 package br.ufrn.imd.sgam.controller;
 
-import br.ufrn.imd.sgam.dto.MusicalgroupDTO;
-import br.ufrn.imd.sgam.service.MusicalgroupService;
+import br.ufrn.imd.sgam.dto.MusicalGroupDTO;
+import br.ufrn.imd.sgam.service.MusicalGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/v1/grupos-musicais")
 @Tag(name = "Grupo Musical", description = "Gerenciamento de grupos musicais")
-public class MusicalgroupController {
+public class MusicalGroupController {
 
-    private final MusicalgroupService musicalgroupService;
+    private final MusicalGroupService musicalgroupService;
 
     @Operation(summary = "Criação de um grupo musical")
     @ApiResponses(value = {
@@ -29,7 +29,7 @@ public class MusicalgroupController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @PostMapping
-    public ResponseEntity<MusicalgroupDTO> create(@Valid @RequestBody MusicalgroupDTO musicalgroup) {
+    public ResponseEntity<MusicalGroupDTO> create(@Valid @RequestBody MusicalGroupDTO musicalgroup) {
         return ResponseEntity.ok(musicalgroupService.save(musicalgroup));
     }
 
@@ -39,7 +39,7 @@ public class MusicalgroupController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @GetMapping
-    public ResponseEntity<Page<MusicalgroupDTO>> list(@PageableDefault Pageable pageable) {
+    public ResponseEntity<Page<MusicalGroupDTO>> list(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(musicalgroupService.list(pageable));
     }
 
@@ -50,7 +50,7 @@ public class MusicalgroupController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<MusicalgroupDTO> get(@PathVariable Long id) {
+    public ResponseEntity<MusicalGroupDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(musicalgroupService.get(id));
     }
 
@@ -62,7 +62,7 @@ public class MusicalgroupController {
             @ApiResponse(description = "Erro interno do servidor", responseCode = "500")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<MusicalgroupDTO> update(@PathVariable Long id, @Valid @RequestBody MusicalgroupDTO musicalgroup) {
+    public ResponseEntity<MusicalGroupDTO> update(@PathVariable Long id, @Valid @RequestBody MusicalGroupDTO musicalgroup) {
         return ResponseEntity.ok(musicalgroupService.update(id, musicalgroup));
     }
 
