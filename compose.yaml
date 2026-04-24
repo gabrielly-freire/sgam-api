@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:16
     container_name: sgam_postgres
     environment:
       - POSTGRES_DB=sgam_db
