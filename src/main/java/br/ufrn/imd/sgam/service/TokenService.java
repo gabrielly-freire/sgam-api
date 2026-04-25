@@ -1,13 +1,12 @@
 package br.ufrn.imd.sgam.service;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import br.ufrn.imd.sgam.model.UserInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Service
 public class TokenService {
@@ -23,7 +22,16 @@ public class TokenService {
                 .sign(algorithm);
     }
 
+    public String validateToken(String token) { // Valida o token - retorna o username se for válido
+        Algorithm algorithm = Algorithm.HMAC256(secret);
+        JWTVerifier verifier = JWT.require(algorithm)
+                .withIssuer("sgam-api")
+                .build();
+
+        return verifier.verify(token).getSubject();
+    }
+
     private Instant genExpirationDate() {
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
+        return Instant.now().plusSeconds(2 * 60 * 60); // 2 horas
     }
 }
