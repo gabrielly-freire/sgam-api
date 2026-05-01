@@ -1,6 +1,7 @@
 package br.ufrn.imd.sgam.config;
 
 import br.ufrn.imd.sgam.service.TokenService;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -80,7 +81,7 @@ public class SecurityConfig {
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
-                } catch (Exception ex) {
+                } catch (JWTVerificationException ex) {
                     SecurityContextHolder.clearContext();
                 }
 
