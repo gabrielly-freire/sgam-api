@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // Import correto do Spring
+import org.springframework.http.HttpMethod; 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,7 +38,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF para APIs REST
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // API sem estado (JWT)
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll() // Login público
+                .requestMatchers(HttpMethod.POST, "/v1/auth/login").permitAll() // Login público
                 .requestMatchers(HttpMethod.POST, "/user-info").permitAll()  // Cadastro público
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Swagger público (opcional)
                 .anyRequest().authenticated() // Tudo o resto exige autenticação
