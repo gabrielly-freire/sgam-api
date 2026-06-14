@@ -1,7 +1,9 @@
 package br.ufrn.imd.sgam.controller;
 
 import br.ufrn.imd.sgam.dto.EventDTO;
+import br.ufrn.imd.sgam.dto.PresentationRequestDTO;
 import br.ufrn.imd.sgam.service.EventService;
+import br.ufrn.imd.sgam.service.PresentationRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class EventController {
 
     private final EventService service;
+    private final PresentationRequestService presentationRequestService;
 
     @Operation(summary = "Cadastro de evento")
     @PostMapping
@@ -36,6 +39,15 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<EventDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(service.get(id));
+    }
+
+    @Operation(summary = "Listar apresentações confirmadas para o evento")
+    @GetMapping("/{id}/apresentacoes-confirmadas")
+    public ResponseEntity<Page<PresentationRequestDTO>> listConfirmedPresentations(
+            @PathVariable Long id,
+            @PageableDefault Pageable pageable
+    ) {
+        return ResponseEntity.ok(presentationRequestService.listConfirmedByEvent(id, pageable));
     }
 
     @Operation(summary = "Editar evento")
