@@ -1,32 +1,36 @@
 package br.ufrn.imd.sgam.repository;
 
-import br.ufrn.imd.sgam.enums.PresentationRequestStatus;
+import br.ufrn.imd.sgam.enums.RequestStatus;
 import br.ufrn.imd.sgam.model.PresentationRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Repository
-public interface PresentationRequestRepository extends GenericRepository<PresentationRequest> {
+public interface PresentationRequestRepository extends JpaRepository<PresentationRequest, Long> {
 
-    Page<PresentationRequest> findByMusicalGroupCoordenadorIdAndStatus(
-            Long coordenadorId,
-            PresentationRequestStatus status,
-            Pageable pageable
-    );
+        List<PresentationRequest> findByStatus(
+                        RequestStatus status);
 
-    Page<PresentationRequest> findByEventIdAndStatus(
-            Long eventId,
-            PresentationRequestStatus status,
-            Pageable pageable
-    );
+        List<PresentationRequest> findByRequesterId(
+                        Long requesterId);
 
-    boolean existsByMusicalGroupIdAndStatusAndEventDateTimeAndIdNot(
-            Long musicalGroupId,
-            PresentationRequestStatus status,
-            LocalDateTime dateTime,
-            Long ignoredId
-    );
+        Page<PresentationRequest> findByEventIdAndStatus(
+                        Long eventId,
+                        RequestStatus status,
+                        Pageable pageable);
+
+        @Query("""
+                            SELECT COUNT(pr) > 0
+                            FROM PresentationRequest pr
+                            WHERE pr.musicalGroup.id = :groupId
+                            AND pr.event.dateTime = :dateTime
+                            AND pr.status = 'CONFIRMADO'
+                        """)
+        boolean existsConfirmedPresentationAtSameTime(
+                        Long groupId,
+                        LocalDateTime dateTime);
 }
