@@ -24,5 +24,4 @@ public class MusicalGroup extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coordenador_id")
     private UserInfo coordenador;
-
 }
