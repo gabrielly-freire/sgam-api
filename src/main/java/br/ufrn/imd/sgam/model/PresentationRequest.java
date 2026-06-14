@@ -1,17 +1,7 @@
 package br.ufrn.imd.sgam.model;
 
-import br.ufrn.imd.sgam.enums.PresentationRequestStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import br.ufrn.imd.sgam.enums.RequestStatus;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,7 +10,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "solicitacao_apresentacao")
+@Table(name = "presentation_request")
 @SQLRestriction(value = "active = true")
 public class PresentationRequest extends BaseEntity {
 
@@ -28,25 +18,32 @@ public class PresentationRequest extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Evento solicitado.
+     */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evento_id")
+    @JoinColumn(name = "event_id")
     private Event event;
 
+    /**
+     * Usuário que realizou a solicitação.
+     */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grupo_musical_id")
+    @JoinColumn(name = "requester_id")
+    private UserInfo requester;
+
+    /**
+     * Grupo que aceitou a solicitação.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "musical_group_id")
     private MusicalGroup musicalGroup;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "solicitante_id")
-    private UserInfo solicitante;
-
-    @NotNull
     @Enumerated(EnumType.STRING)
-    private PresentationRequestStatus status = PresentationRequestStatus.PENDENTE;
+    private RequestStatus status = RequestStatus.PENDENTE;
 
-    @Column(name = "motivo_cancelamento", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String cancellationReason;
 }

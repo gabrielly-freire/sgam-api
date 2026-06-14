@@ -1,134 +1,194 @@
 package br.ufrn.imd.sgam.service;
 
-import br.ufrn.imd.sgam.dto.PresentationRequestCancelDTO;
-import br.ufrn.imd.sgam.dto.PresentationRequestCreateDTO;
-import br.ufrn.imd.sgam.dto.PresentationRequestDTO;
+import br.ufrn.imd.sgam.dto.*;
 import br.ufrn.imd.sgam.enums.PresentationRequestStatus;
-import br.ufrn.imd.sgam.exception.BusinessException;
-import br.ufrn.imd.sgam.exception.ResourceNotFoundException;
+import br.ufrn.imd.sgam.enums.RequestStatus;
 import br.ufrn.imd.sgam.mapper.PresentationRequestMapper;
-import br.ufrn.imd.sgam.model.Event;
-import br.ufrn.imd.sgam.model.MusicalGroup;
-import br.ufrn.imd.sgam.model.PresentationRequest;
-import br.ufrn.imd.sgam.model.UserInfo;
-import br.ufrn.imd.sgam.repository.EventRepository;
-import br.ufrn.imd.sgam.repository.MusicalGroupRepository;
-import br.ufrn.imd.sgam.repository.PresentationRequestRepository;
-import br.ufrn.imd.sgam.repository.UserInfoRepository;
-import lombok.AllArgsConstructor;
+import br.ufrn.imd.sgam.model.*;
+import br.ufrn.imd.sgam.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PresentationRequestService {
 
-    private final PresentationRequestRepository presentationRequestRepository;
-    private final EventRepository eventRepository;
-    private final MusicalGroupRepository musicalGroupRepository;
-    private final UserInfoRepository userInfoRepository;
-    private final PresentationRequestMapper presentationRequestMapper;
+        private final PresentationRequestRepository repository;
+        private final EventRepository eventRepository;
+        private final MusicalGroupRepository musicalGroupRepository;
+        private final PresentationRequestMapper mapper;
 
-    public PresentationRequestDTO save(PresentationRequestCreateDTO dto, Long solicitanteId) {
-        Event event = eventRepository.findById(dto.eventId()).orElseThrow(
-                () -> new ResourceNotFoundException("Evento não encontrado"));
-        MusicalGroup musicalGroup = musicalGroupRepository.findById(dto.musicalGroupId()).orElseThrow(
-                () -> new ResourceNotFoundException("Grupo musical não encontrado"));
-        UserInfo solicitante = userInfoRepository.findById(solicitanteId).orElseThrow(
-                () -> new ResourceNotFoundException("Solicitante não encontrado"));
-
-        PresentationRequest presentationRequest = new PresentationRequest();
-        presentationRequest.setEvent(event);
-        presentationRequest.setMusicalGroup(musicalGroup);
-        presentationRequest.setSolicitante(solicitante);
-        presentationRequest.setStatus(PresentationRequestStatus.PENDENTE);
-
-        return presentationRequestMapper.toDTO(presentationRequestRepository.save(presentationRequest));
-    }
-
-    public Page<PresentationRequestDTO> listPendingByCoordinator(Long coordinatorId, Pageable pageable) {
-        return presentationRequestRepository.findByMusicalGroupCoordenadorIdAndStatus(
-                coordinatorId,
-                PresentationRequestStatus.PENDENTE,
-                pageable
-        ).map(presentationRequestMapper::toDTO);
-    }
-
-    public PresentationRequestDTO confirm(Long id, Long coordinatorId) {
-        PresentationRequest presentationRequest = getEntity(id);
-        validatePending(presentationRequest);
-        validateCoordinator(presentationRequest, coordinatorId);
-        validateScheduleAvailability(presentationRequest);
-
-        presentationRequest.setStatus(PresentationRequestStatus.CONFIRMADO);
-
-        return presentationRequestMapper.toDTO(presentationRequestRepository.save(presentationRequest));
-    }
-
-    public PresentationRequestDTO cancel(Long id, PresentationRequestCancelDTO dto, Long userId) {
-        PresentationRequest presentationRequest = getEntity(id);
-        validateCancellationPermission(presentationRequest, userId);
-
-        if (presentationRequest.getStatus() == PresentationRequestStatus.CANCELADO) {
-            throw new BusinessException("Solicitação de apresentação ja cancelada.", HttpStatus.CONFLICT);
+        private boolean isAdmin(UserInfo user) {
+                return user.getRole().name().equals("ADMIN");
         }
 
-        presentationRequest.setStatus(PresentationRequestStatus.CANCELADO);
-        presentationRequest.setCancellationReason(dto.cancellationReason());
-
-        return presentationRequestMapper.toDTO(presentationRequestRepository.save(presentationRequest));
-    }
-
-    public Page<PresentationRequestDTO> listConfirmedByEvent(Long eventId, Pageable pageable) {
-        eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Evento não encontrado"));
-
-        return presentationRequestRepository.findByEventIdAndStatus(
-                eventId,
-                PresentationRequestStatus.CONFIRMADO,
-                pageable
-        ).map(presentationRequestMapper::toDTO);
-    }
-
-    private PresentationRequest getEntity(Long id) {
-        return presentationRequestRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Solicitação de apresentação não encontrada"));
-    }
-
-    private void validatePending(PresentationRequest presentationRequest) {
-        if (presentationRequest.getStatus() != PresentationRequestStatus.PENDENTE) {
-            throw new BusinessException("Apenas solicitações pendentes podem ser confirmadas.", HttpStatus.CONFLICT);
+        private boolean isCoordinator(UserInfo user) {
+                return user.getRole().name().equals("COORDENADOR");
         }
-    }
 
-    private void validateCoordinator(PresentationRequest presentationRequest, Long coordinatorId) {
-        Long groupCoordinatorId = presentationRequest.getMusicalGroup().getCoordenador().getId();
-        if (!groupCoordinatorId.equals(coordinatorId)) {
-            throw new BusinessException("Usuario não coordena o grupo musical informado.", HttpStatus.FORBIDDEN);
+        @Transactional
+        public PresentationRequestResponseDTO create(
+                        CreatePresentationRequestDTO dto,
+                        UserInfo requester) {
+
+                Event event = eventRepository.findById(dto.eventId())
+                                .orElseThrow();
+
+                PresentationRequest request = new PresentationRequest();
+
+                request.setEvent(event);
+                request.setRequester(requester);
+                request.setStatus(RequestStatus.PENDENTE);
+
+                repository.save(request);
+
+                return mapper.toDTO(request);
         }
-    }
 
-    private void validateCancellationPermission(PresentationRequest presentationRequest, Long userId) {
-        Long solicitanteId = presentationRequest.getSolicitante().getId();
-        Long coordinatorId = presentationRequest.getMusicalGroup().getCoordenador().getId();
+        @Transactional
+        public void confirm(
+                        Long requestId,
+                        ConfirmPresentationRequestDTO dto,
+                        UserInfo currentUser) {
 
-        if (!solicitanteId.equals(userId) && !coordinatorId.equals(userId)) {
-            throw new BusinessException("Usuario não pode cancelar esta solicitação.", HttpStatus.FORBIDDEN);
+                PresentationRequest request = repository.findById(requestId)
+                                .orElseThrow();
+
+                MusicalGroup group = musicalGroupRepository
+                                .findById(dto.musicalGroupId())
+                                .orElseThrow();
+
+                if (!group.getCoordenador()
+                                .getId()
+                                .equals(currentUser.getId())) {
+
+                        throw new RuntimeException(
+                                        "Você não coordena este grupo.");
+                }
+
+                boolean alreadyBusy = repository
+                                .existsConfirmedPresentationAtSameTime(
+                                                group.getId(),
+                                                request.getEvent()
+                                                                .getDateTime());
+
+                if (alreadyBusy) {
+
+                        throw new RuntimeException(
+                                        "Grupo já possui apresentação confirmada neste horário.");
+                }
+
+                request.setMusicalGroup(group);
+                request.setStatus(RequestStatus.CONFIRMADO);
+
+                repository.save(request);
         }
-    }
 
-    private void validateScheduleAvailability(PresentationRequest presentationRequest) {
-        boolean hasConflict = presentationRequestRepository.existsByMusicalGroupIdAndStatusAndEventDateTimeAndIdNot(
-                presentationRequest.getMusicalGroup().getId(),
-                PresentationRequestStatus.CONFIRMADO,
-                presentationRequest.getEvent().getDateTime(),
-                presentationRequest.getId()
-        );
+        @Transactional
+        public void cancel(
+                        Long requestId,
+                        CancelPresentationRequestDTO dto,
+                        UserInfo currentUser) {
 
-        if (hasConflict) {
-            throw new BusinessException("Grupo musical ja possui apresentação confirmada neste horario.",
-                    HttpStatus.CONFLICT);
+                PresentationRequest request = repository.findById(requestId)
+                                .orElseThrow();
+
+                boolean isRequester = request.getRequester()
+                                .getId()
+                                .equals(currentUser.getId());
+
+                boolean isCoordinator = request.getMusicalGroup() != null
+                                &&
+                                request.getMusicalGroup()
+                                                .getCoordenador()
+                                                .getId()
+                                                .equals(currentUser.getId());
+
+                if (!isRequester && !isCoordinator) {
+
+                        throw new RuntimeException(
+                                        "Você não possui permissão para cancelar esta solicitação.");
+                }
+
+                request.setStatus(
+                                RequestStatus.CANCELADO);
+
+                request.setCancellationReason(
+                                dto.cancellationReason());
+
+                repository.save(request);
         }
-    }
+
+        public List<PresentationRequestResponseDTO> listPending(UserInfo currentUser) {
+
+                if (!isCoordinator(currentUser)) {
+
+                        throw new RuntimeException(
+                                        "Apenas coordenadores podem visualizar solicitações pendentes.");
+                }
+
+                return repository.findByStatus(
+                                RequestStatus.PENDENTE)
+                                .stream()
+                                .map(mapper::toDTO)
+                                .toList();
+        }
+
+        public List<PresentationRequestResponseDTO> listConfirmed() {
+
+                return repository.findByStatus(
+                                RequestStatus.CONFIRMADO)
+                                .stream()
+                                .map(mapper::toDTO)
+                                .toList();
+        }
+
+        public List<PresentationRequestResponseDTO> listAll(UserInfo currentUser) {
+
+                if (!isAdmin(currentUser)) {
+
+                        throw new RuntimeException(
+                                        "Apenas administradores podem visualizar todas as solicitações.");
+                }
+
+                return repository.findAll()
+                                .stream()
+                                .map(mapper::toDTO)
+                                .toList();
+        }
+
+        public List<PresentationRequestResponseDTO> listMyRequests(UserInfo currentUser) {
+
+                return repository
+                                .findByRequesterId(
+                                                currentUser.getId())
+                                .stream()
+                                .map(mapper::toDTO)
+                                .toList();
+        }
+
+        public Page<PresentationRequestDTO> listConfirmedByEvent(Long eventId, Pageable pageable) {
+
+                return repository
+                                .findByEventIdAndStatus(
+                                                eventId,
+                                                RequestStatus.CONFIRMADO,
+                                                pageable)
+                                .map(r -> new PresentationRequestDTO(
+                                                r.getId(),
+                                                r.getEvent().getId(),
+                                                r.getEvent().getTitle(),
+                                                r.getEvent().getDateTime(),
+                                                r.getMusicalGroup() != null ? r.getMusicalGroup().getId() : null,
+                                                r.getMusicalGroup() != null ? r.getMusicalGroup().getNome() : null,
+                                                r.getRequester().getId(),
+                                                r.getRequester().getName(),
+                                                PresentationRequestStatus.valueOf(r.getStatus().name()),
+                                                r.getCancellationReason()));
+        }
 }
