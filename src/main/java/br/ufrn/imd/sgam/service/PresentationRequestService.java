@@ -1,11 +1,14 @@
 package br.ufrn.imd.sgam.service;
 
 import br.ufrn.imd.sgam.dto.*;
+import br.ufrn.imd.sgam.enums.PresentationRequestStatus;
 import br.ufrn.imd.sgam.enums.RequestStatus;
 import br.ufrn.imd.sgam.mapper.PresentationRequestMapper;
 import br.ufrn.imd.sgam.model.*;
 import br.ufrn.imd.sgam.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -167,5 +170,25 @@ public class PresentationRequestService {
                                 .stream()
                                 .map(mapper::toDTO)
                                 .toList();
+        }
+
+        public Page<PresentationRequestDTO> listConfirmedByEvent(Long eventId, Pageable pageable) {
+
+                return repository
+                                .findByEventIdAndStatus(
+                                                eventId,
+                                                RequestStatus.CONFIRMADO,
+                                                pageable)
+                                .map(r -> new PresentationRequestDTO(
+                                                r.getId(),
+                                                r.getEvent().getId(),
+                                                r.getEvent().getTitle(),
+                                                r.getEvent().getDateTime(),
+                                                r.getMusicalGroup() != null ? r.getMusicalGroup().getId() : null,
+                                                r.getMusicalGroup() != null ? r.getMusicalGroup().getNome() : null,
+                                                r.getRequester().getId(),
+                                                r.getRequester().getName(),
+                                                PresentationRequestStatus.valueOf(r.getStatus().name()),
+                                                r.getCancellationReason()));
         }
 }
