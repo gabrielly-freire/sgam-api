@@ -25,8 +25,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.io.IOException;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -35,19 +39,44 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, OncePerRequestFilter jwtAuthenticationFilter) throws Exception {
         return http
-            .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF para APIs REST
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // API sem estado (JWT)
+            // 1. Vincula o gerenciamento de CORS ao Spring Security
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
+            .csrf(AbstractHttpConfigurer::disable) 
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) 
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.POST, "/v1/auth/login").permitAll() // Login público
-                .requestMatchers(HttpMethod.POST, "/user-info").permitAll()  // Cadastro público
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Swagger público (opcional)
-                .anyRequest().authenticated() // Tudo o resto exige autenticação
+                // 2. Libera explicitamente as requisições OPTIONS prévias que o navegador faz
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/v1/auth/login").permitAll() 
+                .requestMatchers(HttpMethod.POST, "/user-info").permitAll()  
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() 
+                .anyRequest().authenticated() 
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // para validar JWT nas rotas que precisam do token
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) 
             .build();
     }
 
-    // Filtro de autenticação de JWT -> Valida o token e carrega o usuário do SecurityContextHolder
+    // 3. Define a política de CORS para a aplicação
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Habilita as origens locais do seu Front-end sem barras no final
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        
+        // Permite os métodos necessários para a comunicação
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        
+        // Permite os cabeçalhos usados pelas requisições, incluindo o seu token JWT
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        
+        // Permite o compartilhamento de credenciais se necessário
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     public OncePerRequestFilter jwtAuthenticationFilter(TokenService tokenService, UserDetailsService userDetailsService) {
         return new OncePerRequestFilter() {
@@ -57,6 +86,14 @@ public class SecurityConfig {
                     HttpServletResponse response,
                     FilterChain filterChain
             ) throws ServletException, IOException {
+                
+                // 4. Impede o filtro de JWT de tentar interceptar ou barrar requisições OPTIONS
+                if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 String header = request.getHeader("Authorization");
                 if (header == null || !header.startsWith("Bearer ")) {
                     filterChain.doFilter(request, response);
