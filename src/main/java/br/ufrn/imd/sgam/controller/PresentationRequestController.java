@@ -35,13 +35,12 @@ public class PresentationRequestController {
         })
         @PostMapping
         public ResponseEntity<PresentationRequestResponseDTO> create(
+                @Valid @RequestBody CreatePresentationRequestDTO dto,
+                @RequestParam Long groupId, // Captura o ID do grupo da URL
+                @RequestParam String time,   // Captura a data da URL
+                @AuthenticationPrincipal UserInfo user) {
 
-                        @Valid @RequestBody CreatePresentationRequestDTO dto,
-
-                        @AuthenticationPrincipal UserInfo user) {
-
-                return ResponseEntity.ok(
-                                service.create(dto, user));
+                        return ResponseEntity.ok(service.createComDadosExtras(dto, groupId, time, user));
         }
 
         @Operation(summary = "Confirmar solicitação", description = "Permite que o coordenador do grupo confirme uma solicitação de apresentação.")

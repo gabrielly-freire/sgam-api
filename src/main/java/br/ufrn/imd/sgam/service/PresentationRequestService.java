@@ -191,4 +191,12 @@ public class PresentationRequestService {
                                                 PresentationRequestStatus.valueOf(r.getStatus().name()),
                                                 r.getCancellationReason()));
         }
+
+        public PresentationRequestResponseDTO createComDadosExtras(
+                CreatePresentationRequestDTO dto, 
+                Long groupId, 
+                String time, 
+                UserInfo user) {
+                return this.create(dto, user); 
+        }
 }
