@@ -34,5 +34,18 @@ public class DataInitializer implements CommandLineRunner {
 
             System.out.println("✅ Usuário ADMIN criado!");
         }
+
+        String coordEmail = "coordenador@coordenador.com";
+        if (!repository.existsUserInfoByEmail(coordEmail)) {
+            UserInfo coordenador = new UserInfo();
+            coordenador.setName("Coordenador de Grupo Musical");
+            coordenador.setEmail(coordEmail);
+            coordenador.setUsername("coordenador");
+            coordenador.setPassword(passwordEncoder.encode("123456"));  
+            coordenador.setRole(Role.COORDENADOR); 
+            coordenador.setActive(true);
+
+            repository.save(coordenador);
+        }
     }
 }
