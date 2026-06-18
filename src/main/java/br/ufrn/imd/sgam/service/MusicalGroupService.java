@@ -1,14 +1,20 @@
 package br.ufrn.imd.sgam.service;
 
 import br.ufrn.imd.sgam.dto.MusicalGroupDTO;
+import br.ufrn.imd.sgam.dto.SolicitacaoVinculoDTO;
+import br.ufrn.imd.sgam.enums.StatusSolicitacao;
 import br.ufrn.imd.sgam.exception.BusinessException;
 import br.ufrn.imd.sgam.exception.ResourceNotFoundException;
 import br.ufrn.imd.sgam.mapper.MusicalGroupMapper;
 import br.ufrn.imd.sgam.model.MusicalGroup;
 import br.ufrn.imd.sgam.model.UserInfo;
 import br.ufrn.imd.sgam.repository.MusicalGroupRepository;
+import br.ufrn.imd.sgam.repository.SolicitacaoVinculoRepository;
 import br.ufrn.imd.sgam.repository.UserInfoRepository;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -21,7 +27,6 @@ public class MusicalGroupService {
     private final MusicalGroupRepository musicalGroupRepository;
     private final UserInfoRepository userInfoRepository;
     private final MusicalGroupMapper musicalGroupMapper;
-
     public MusicalGroupDTO save(MusicalGroupDTO dto) {
         if (musicalGroupRepository.existsMusicalGroupByNome(dto.nome())) {
             throw new BusinessException("Já existe um grupo musical com este nome.", HttpStatus.CONFLICT);
@@ -69,6 +74,15 @@ public class MusicalGroupService {
         //TODO: regras de exclusão
 
         musicalGroupRepository.deleteById(id);
+    }
+
+    private final SolicitacaoVinculoRepository solicitacaoVinculoRepository;
+
+    public List<SolicitacaoVinculoDTO> listarSolicitacoesPendentes() {
+        return solicitacaoVinculoRepository.findAllByStatus(StatusSolicitacao.PENDENTE)
+                .stream()
+                .map(SolicitacaoVinculoDTO::new) // Converte a entidade usando o construtor do Record
+                .toList();
     }
 
 }

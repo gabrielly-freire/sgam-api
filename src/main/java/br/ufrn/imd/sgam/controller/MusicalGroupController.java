@@ -1,6 +1,9 @@
 package br.ufrn.imd.sgam.controller;
 
 import br.ufrn.imd.sgam.dto.MusicalGroupDTO;
+import br.ufrn.imd.sgam.dto.SolicitacaoVinculoDTO;
+import br.ufrn.imd.sgam.enums.StatusSolicitacao;
+import br.ufrn.imd.sgam.repository.SolicitacaoVinculoRepository;
 import br.ufrn.imd.sgam.service.MusicalGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @AllArgsConstructor
 @RestController
@@ -79,4 +84,8 @@ public class MusicalGroupController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/solicitacoes-vinculo/pendentes")
+    public ResponseEntity<List<SolicitacaoVinculoDTO>> listarSolicitacoesPendentes() {
+        return ResponseEntity.ok(musicalGroupService.listarSolicitacoesPendentes());
+    }
 }
