@@ -2,6 +2,7 @@ package br.ufrn.imd.sgam.controller;
 
 import br.ufrn.imd.sgam.dto.MusicalGroupDTO;
 import br.ufrn.imd.sgam.dto.SolicitacaoVinculoDTO;
+import br.ufrn.imd.sgam.model.UserInfo;
 import br.ufrn.imd.sgam.service.MusicalGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -104,5 +106,11 @@ public class MusicalGroupController {
     public ResponseEntity<Void> recusarSolicitacao(@PathVariable("solicitacaoId") Long solicitacaoId) {
         musicalGroupService.recusarSolicitacao(solicitacaoId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Listar grupos em que o aluno é integrante")
+    @GetMapping("/meus-grupos")
+    public ResponseEntity<List<MusicalGroupDTO>> listarMeusGrupos(@AuthenticationPrincipal UserInfo user) {
+        return ResponseEntity.ok(musicalGroupService.listarPorIntegrante(user.getId()));
     }
 }

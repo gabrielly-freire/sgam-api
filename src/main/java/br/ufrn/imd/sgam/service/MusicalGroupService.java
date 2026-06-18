@@ -15,6 +15,7 @@ import br.ufrn.imd.sgam.repository.UserInfoRepository;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -141,4 +142,10 @@ public class MusicalGroupService {
 
         solicitacaoVinculoRepository.atualizarStatus(solicitacaoId, StatusSolicitacao.RECUSADO);
     }
+    public List<MusicalGroupDTO> listarPorIntegrante(Long alunoId) {
+    return musicalGroupRepository.findAllByIntegrantesId(alunoId)
+            .stream()
+            .map(musicalGroupMapper::toMusicalGroupDTO)
+            .collect(Collectors.toList());
+}
 }

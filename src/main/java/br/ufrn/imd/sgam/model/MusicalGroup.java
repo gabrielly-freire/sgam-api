@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.List;
+
 import org.hibernate.annotations.SQLRestriction;
 
 @Data
@@ -24,4 +27,6 @@ public class MusicalGroup extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coordenador_id")
     private UserInfo coordenador;
+    @ManyToMany
+    private List<UserInfo> integrantes;
 }
