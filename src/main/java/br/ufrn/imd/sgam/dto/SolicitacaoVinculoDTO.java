@@ -5,7 +5,7 @@ import br.ufrn.imd.sgam.model.SolicitacaoVinculo;
 public record SolicitacaoVinculoDTO(
     Long id,
     String alunoNome,
-    String alunoMatricula, // Mantemos o nome que o front-end espera receber
+    String alunoMatricula,
     String grupoNome,
     String status
 ) {

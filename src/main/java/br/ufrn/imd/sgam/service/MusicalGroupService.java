@@ -7,6 +7,7 @@ import br.ufrn.imd.sgam.exception.BusinessException;
 import br.ufrn.imd.sgam.exception.ResourceNotFoundException;
 import br.ufrn.imd.sgam.mapper.MusicalGroupMapper;
 import br.ufrn.imd.sgam.model.MusicalGroup;
+import br.ufrn.imd.sgam.model.SolicitacaoVinculo;
 import br.ufrn.imd.sgam.model.UserInfo;
 import br.ufrn.imd.sgam.repository.MusicalGroupRepository;
 import br.ufrn.imd.sgam.repository.SolicitacaoVinculoRepository;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -27,6 +29,8 @@ public class MusicalGroupService {
     private final MusicalGroupRepository musicalGroupRepository;
     private final UserInfoRepository userInfoRepository;
     private final MusicalGroupMapper musicalGroupMapper;
+    private final SolicitacaoVinculoRepository solicitacaoVinculoRepository;
+
     public MusicalGroupDTO save(MusicalGroupDTO dto) {
         if (musicalGroupRepository.existsMusicalGroupByNome(dto.nome())) {
             throw new BusinessException("Já existe um grupo musical com este nome.", HttpStatus.CONFLICT);
@@ -76,13 +80,65 @@ public class MusicalGroupService {
         musicalGroupRepository.deleteById(id);
     }
 
-    private final SolicitacaoVinculoRepository solicitacaoVinculoRepository;
+    @Transactional // Garante contexto transacional na criação
+    public void solicitarVinculo(Long grupoId) {
+        MusicalGroup grupo = musicalGroupRepository.findById(grupoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo musical não encontrado"));
+
+        Object principal = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        String username;
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            username = userDetails.getUsername();
+        } else {
+            username = principal.toString();
+        }
+
+        UserInfo alunoLogado = userInfoRepository.findByUsername(username);
+
+        if (alunoLogado == null) {
+            throw new ResourceNotFoundException("Usuário logado não encontrado no sistema.");
+        }
+
+        SolicitacaoVinculo solicitacao = new SolicitacaoVinculo();
+        solicitacao.setAluno(alunoLogado);
+        solicitacao.setMusicalGroup(grupo);
+        solicitacao.setStatus(StatusSolicitacao.PENDENTE);
+
+        solicitacaoVinculoRepository.save(solicitacao);
+    }
 
     public List<SolicitacaoVinculoDTO> listarSolicitacoesPendentes() {
         return solicitacaoVinculoRepository.findAllByStatus(StatusSolicitacao.PENDENTE)
                 .stream()
-                .map(SolicitacaoVinculoDTO::new) // Converte a entidade usando o construtor do Record
+                .map(SolicitacaoVinculoDTO::new)
                 .toList();
     }
 
+    @Transactional
+    public void aprovarSolicitacao(Long solicitacaoId) {
+        SolicitacaoVinculo solicitacao = solicitacaoVinculoRepository.findById(solicitacaoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada"));
+
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
+            throw new BusinessException("Esta solicitação já foi processada.", HttpStatus.BAD_REQUEST);
+        }
+
+        solicitacaoVinculoRepository.atualizarStatus(solicitacaoId, StatusSolicitacao.APROVADO);
+    }
+
+    @Transactional
+    public void recusarSolicitacao(Long solicitacaoId) {
+        SolicitacaoVinculo solicitacao = solicitacaoVinculoRepository.findById(solicitacaoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada"));
+
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
+            throw new BusinessException("Esta solicitação já foi processada.", HttpStatus.BAD_REQUEST);
+        }
+
+        solicitacaoVinculoRepository.atualizarStatus(solicitacaoId, StatusSolicitacao.RECUSADO);
+    }
 }

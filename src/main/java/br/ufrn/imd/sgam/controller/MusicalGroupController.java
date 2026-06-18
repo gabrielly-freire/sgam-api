@@ -2,8 +2,6 @@ package br.ufrn.imd.sgam.controller;
 
 import br.ufrn.imd.sgam.dto.MusicalGroupDTO;
 import br.ufrn.imd.sgam.dto.SolicitacaoVinculoDTO;
-import br.ufrn.imd.sgam.enums.StatusSolicitacao;
-import br.ufrn.imd.sgam.repository.SolicitacaoVinculoRepository;
 import br.ufrn.imd.sgam.service.MusicalGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -87,5 +85,24 @@ public class MusicalGroupController {
     @GetMapping("/solicitacoes-vinculo/pendentes")
     public ResponseEntity<List<SolicitacaoVinculoDTO>> listarSolicitacoesPendentes() {
         return ResponseEntity.ok(musicalGroupService.listarSolicitacoesPendentes());
+    }
+
+    @Operation(summary = "Solicitação de vínculo de aluno ao grupo")
+    @PostMapping("/{id}/vincular")
+    public ResponseEntity<Void> vincularAluno(@PathVariable Long id) {
+        musicalGroupService.solicitarVinculo(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/solicitacoes-vinculo/{solicitacaoId}/aprovar")
+    public ResponseEntity<Void> aprovarSolicitacao(@PathVariable("solicitacaoId") Long solicitacaoId) {
+    musicalGroupService.aprovarSolicitacao(solicitacaoId);
+    return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/solicitacoes-vinculo/{solicitacaoId}/recusar")
+    public ResponseEntity<Void> recusarSolicitacao(@PathVariable("solicitacaoId") Long solicitacaoId) {
+        musicalGroupService.recusarSolicitacao(solicitacaoId);
+        return ResponseEntity.ok().build();
     }
 }
